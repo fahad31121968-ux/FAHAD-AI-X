@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FAHAD AI X</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        /* Markdown Styling */
+        .markdown-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; }
+        .markdown-body p { margin-bottom: 1em; }
+        .markdown-body pre { background-color: #1e293b; color: #f8fafc; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1em; }
+        .dark .markdown-body pre { background-color: #0f172a; }
+        .markdown-body code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 0.25rem; font-size: 0.9em; }
+        .dark .markdown-body code { background-color: rgba(255,255,255,0.1); }
+        .markdown-body pre code { background-color: transparent; padding: 0; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+        .markdown-body ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+        
+        /* Blinking Cursor for Typing Animation */
+        .cursor-blink::after { content: '|'; animation: blink 1s step-start infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Loader Hide Class */
+        .hide-loader { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        
+        /* File Attachment Pill */
+        .file-pill { display: inline-flex; items-center; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; margin-right: 0.5rem; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white overflow-hidden">
+
+    <div id="loading" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white dark:bg-slate-900">
+        <div class="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+        <div class="mt-4 text-lg font-semibold text-slate-700 dark:text-slate-300">Loading FAHAD AI X...</div>
+    </div>
+
+    <div id="app" class="flex min-h-screen w-full invisible opacity-0 transition-opacity duration-300">
+        
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-slate-50 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 flex flex-col">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <div class="font-bold text-xl tracking-tight text-brand-600 dark:text-brand-500">FAHAD AI X</div>
+                <button id="close-sidebar" class="md:hidden text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 p-2">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-4">
+                <button id="btn-new-chat" class="w-full flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors shadow-sm">
+                    <i class="fas fa-plus text-brand-500"></i>
+                    <span class="font-medium">New Chat</span>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 pt-0 space-y-1" id="chat-history">
+                </div>
+
+            <div class="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+                <button id="btn-system-prompt" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors w-full text-left text-slate-700 dark:text-slate-300">
+                    <i class="fas fa-brain w-5 text-center"></i> System Prompt
+                </button>
+                <button id="btn-settings" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors w-full text-left text-slate-700 dark:text-slate-300">
+                    <i class="fas fa-cog w-5 text-center"></i> Settings
+                </button>
+                <div class="mt-2 text-xs text-center text-slate-400 dark:text-slate-500 font-medium">
+                    Developed by FAHAD
+                </div>
+            </div>
+        </aside>
+
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
+
+        <main class="flex-1 flex flex-col min-h-screen w-full relative">
+            
+            <header class="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-20">
+                <div class="flex items-center gap-3">
+                    <button id="open-sidebar" class="md:hidden text-slate-600 dark:text-slate-300 p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="current-chat-title" class="font-medium text-lg truncate max-w-[200px] sm:max-w-md">New Chat</h1>
+                </div>
+                <button id="btn-theme-toggle" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+            </header>
+
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 sm:p-6 pb-32">
+                <div id="messages-list" class="max-w-4xl mx-auto space-y-6">
+                    <div id="empty-state" class="flex flex-col items-center justify-center h-full pt-20 text-center opacity-50">
+                        <i class="fas fa-robot text-6xl mb-4 text-brand-500"></i>
+                        <h2 class="text-2xl font-bold mb-2">FAHAD AI X</h2>
+                        <p class="max-w-sm text-sm">Upload images, videos, zip files, or type a message to start analyzing and chatting.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white dark:from-slate-900 dark:via-slate-900 to-transparent pt-6 pb-4 px-4">
+                <div class="max-w-4xl mx-auto relative flex flex-col bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
+                    
+                    <div id="attachments-area" class="px-4 pt-3 hidden flex-wrap gap-2 border-b border-slate-100 dark:border-slate-700"></div>
+                    
+                    <div class="flex items-end gap-2 p-2 relative">
+                        <input type="file" id="file-upload" class="hidden" accept="image/*,video/*,audio/*,.zip,.pdf,.txt,.doc,.docx" multiple>
+                        <button id="btn-attach" class="p-3 text-slate-500 hover:text-brand-500 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Upload Video, Image, File, ZIP">
+                            <i class="fas fa-paperclip text-lg"></i>
+                        </button>
+                        
+                        <textarea id="chat-input" rows="1" class="flex-1 max-h-48 min-h-[44px] bg-transparent resize-none outline-none py-3 px-2 text-slate-900 dark:text-white placeholder-slate-400" placeholder="Message FAHAD AI X..."></textarea>
+                        
+                        <button id="btn-send" class="p-3 text-white bg-brand-500 hover:bg-brand-600 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-center text-xs text-slate-400 mt-2">FAHAD AI X can make mistakes. Consider verifying important information.</div>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-settings" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-300 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Settings</h3>
+                <button class="close-modal text-slate-500 hover:text-slate-800 dark:hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">OpenRouter API Key</label>
+                    <input type="password" id="input-api-key" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="sk-or-v1-...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Model Name</label>
+                    <input type="text" id="input-model" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-brand-500" value="deepseek/deepseek-r1:free">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="btn-save-settings" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-medium transition-colors">Save Details</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-system" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl transform scale-95 transition-transform duration-300 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">System Prompt</h3>
+                <button class="close-modal text-slate-500 hover:text-slate-800 dark:hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-sm text-slate-500 dark:text-slate-400">Define how FAHAD AI X should behave.</p>
+                <textarea id="input-system-prompt" rows="5" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none" placeholder="You are a helpful AI..."></textarea>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="btn-save-system" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-medium transition-colors">Save Prompt</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // --- STATE MANAGEMENT ---
+            let chats = JSON.parse(localStorage.getItem('fahad_chats')) || [];
+            let currentChatId = localStorage.getItem('fahad_current_chat') || null;
+            let apiKey = localStorage.getItem('fahad_api_key') || '';
+            let model = localStorage.getItem('fahad_model') || 'deepseek/deepseek-r1:free';
+            let systemPrompt = localStorage.getItem('fahad_system_prompt') || 'You are FAHAD AI X, a highly intelligent and helpful AI assistant developed by FAHAD.';
+            let isDarkMode = localStorage.getItem('fahad_theme') === 'dark' || (!('fahad_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            let isGenerating = false;
+            let pendingFiles = []; // Store file metadata for context
+
+            // --- DOM ELEMENTS ---
+            const app = document.getElementById('app');
+            const loading = document.getElementById('loading');
+            
+            const chatInput = document.getElementById('chat-input');
+            const btnSend = document.getElementById('btn-send');
+            const messagesList = document.getElementById('messages-list');
+            const chatContainer = document.getElementById('chat-container');
+            const emptyState = document.getElementById('empty-state');
+            const chatHistoryContainer = document.getElementById('chat-history');
+            const currentChatTitle = document.getElementById('current-chat-title');
+            
+            // Sidebar & Modals
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            const openSidebarBtn = document.getElementById('open-sidebar');
+            const closeSidebarBtn = document.getElementById('close-sidebar');
+            const btnNewChat = document.getElementById('btn-new-chat');
+            
+            const btnThemeToggle = document.getElementById('btn-theme-toggle');
+            
+            const modalSettings = document.getElementById('modal-settings');
+            const btnSettings = document.getElementById('btn-settings');
+            const inputApiKey = document.getElementById('input-api-key');
+            const inputModel = document.getElementById('input-model');
+            const btnSaveSettings = document.getElementById('btn-save-settings');
+            
+            const modalSystem = document.getElementById('modal-system');
+            const btnSystemPrompt = document.getElementById('btn-system-prompt');
+            const inputSystemPrompt = document.getElementById('input-system-prompt');
+            const btnSaveSystem = document.getElementById('btn-save-system');
+            const closeModals = document.querySelectorAll('.close-modal');
+
+            // File Elements
+            const fileUpload = document.getElementById('file-upload');
+            const btnAttach = document.getElementById('btn-attach');
+            const attachmentsArea = document.getElementById('attachments-area');
+
+            // --- INITIALIZATION ---
+            function init() {
+                applyTheme(isDarkMode);
+                if (chats.length === 0) createNewChat();
+                else if (!currentChatId || !chats.find(c => c.id === currentChatId)) {
+                    currentChatId = chats[0].id;
+                }
+                
+                inputApiKey.value = apiKey;
+                inputModel.value = model;
+                inputSystemPrompt.value = systemPrompt;
+                
+                renderSidebar();
+                loadChat(currentChatId);
+                
+                // Hide loader and show app safely
+                setTimeout(() => {
+                    loading.classList.add('hide-loader');
+                    app.classList.remove('invisible', 'opacity-0');
+                    setTimeout(() => loading.remove(), 300);
+                }, 500); // slight delay to ensure fonts/styles render
+            }
+
+            // --- THEME ---
+            function applyTheme(dark) {
+                isDarkMode = dark;
+                if (dark) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('fahad_theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('fahad_theme', 'light');
+                }
+            }
+            btnThemeToggle.addEventListener('click', () => applyTheme(!isDarkMode));
+
+            // --- SIDEBAR MOBILE ---
+            function toggleSidebar(show) {
+                if (show) {
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebarOverlay.classList.remove('hidden');
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                    sidebarOverlay.classList.add('hidden');
+                }
+            }
+            openSidebarBtn.addEventListener('click', () => toggleSidebar(true));
+            closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+            sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+
+            // --- MODALS ---
+            function openModal(modal) {
+                modal.classList.remove('hidden');
+                // trigger reflow
+                void modal.offsetWidth;
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }
+            function closeModal(modal) {
+                modal.classList.add('opacity-0');
+                modal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+
+            btnSettings.addEventListener('click', () => { toggleSidebar(false); openModal(modalSettings); });
+            btnSystemPrompt.addEventListener('click', () => { toggleSidebar(false); openModal(modalSystem); });
+            
+            closeModals.forEach(btn => btn.addEventListener('click', (e) => {
+                closeModal(e.target.closest('.fixed'));
+            }));
+
+            btnSaveSettings.addEventListener('click', () => {
+                apiKey = inputApiKey.value.trim();
+                model = inputModel.value.trim() || 'deepseek/deepseek-r1:free';
+                localStorage.setItem('fahad_api_key', apiKey);
+                localStorage.setItem('fahad_model', model);
+                closeModal(modalSettings);
+            });
+
+            btnSaveSystem.addEventListener('click', () => {
+                systemPrompt = inputSystemPrompt.value.trim();
+                localStorage.setItem('fahad_system_prompt', systemPrompt);
+                closeModal(modalSystem);
+            });
+
+            // --- FILE UPLOAD LOGIC (FAHAD Requirement) ---
+            btnAttach.addEventListener('click', () => fileUpload.click());
+            
+            fileUpload.addEventListener('change', async (e) => {
+                const files = e.target.files;
+                if (!files.length) return;
+
+                for(let file of files) {
+                    const isVideo = file.type.startsWith('video/');
+                    const isImage = file.type.startsWith('image/');
+                    const isZip = file.name.endsWith('.zip');
+                    
+                    let fileContext = `File Attached: ${file.name}\nType: ${file.type || (isZip ? 'application/zip' : 'unknown')}\nSize: ${(file.size / 1024).toFixed(2)} KB.\n`;
+                    
+                    // Note for AI: OpenRouter standard endpoints do not parse raw zips/videos natively.
+                    // We extract metadata so the AI can "understand" and analyze the context of what was uploaded.
+                    if (isVideo || isZip) {
+                        fileContext += `Note to AI: A user uploaded a binary file (${isZip ? 'ZIP Archive' : 'Video'}). You cannot 'play' or 'extract' this directly in this text interface, but acknowledge the file and assist the user based on the filename and their queries.\n`;
+                    } else if (file.type.startsWith('text/')) {
+                        // Read text files directly
+                        const text = await file.text();
+                        fileContext += `Content:\n${text.substring(0, 5000)}${text.length > 5000 ? '\n...[Truncated]' : ''}\n`;
+                    }
+
+                    pendingFiles.push({
+                        name: file.name,
+                        context: fileContext,
+                        type: isVideo ? 'video' : isImage ? 'image' : isZip ? 'zip' : 'file'
+                    });
+                }
+                
+                renderPendingFiles();
+                fileUpload.value = ''; // Reset
+            });
+
+            function renderPendingFiles() {
+                attachmentsArea.innerHTML = '';
+                if (pendingFiles.length === 0) {
+                    attachmentsArea.classList.add('hidden');
+                    return;
+                }
+                attachmentsArea.classList.remove('hidden');
+                
+                pendingFiles.forEach((file, index) => {
+                    const pill = document.createElement('div');
+                    pill.className = 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 file-pill flex items-center gap-2 border border-slate-200 dark:border-slate-600';
+                    
+                    let icon = 'fa-file';
+                    if(file.type === 'video') icon = 'fa-video';
+                    else if(file.type === 'image') icon = 'fa-image';
+                    else if(file.type === 'zip') icon = 'fa-file-zipper';
+                    
+                    pill.innerHTML = `
+                        <i class="fas ${icon}"></i> 
+                        <span class="truncate max-w-[120px]">${file.name}</span>
+                        <button class="ml-1 text-slate-500 hover:text-red-500" onclick="removePendingFile(${index})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    attachmentsArea.appendChild(pill);
+                });
+            }
+
+            window.removePendingFile = function(index) {
+                pendingFiles.splice(index, 1);
+                renderPendingFiles();
+            }
+
+            // --- CHAT MANAGEMENT ---
+            function saveChats() {
+                localStorage.setItem('fahad_chats', JSON.stringify(chats));
+                localStorage.setItem('fahad_current_chat', currentChatId);
+                renderSidebar();
+            }
+
+            function createNewChat() {
+                const newId = Date.now().toString();
+                chats.unshift({
+                    id: newId,
+                    title: 'New Chat',
+                    messages: []
+                });
+                currentChatId = newId;
+                saveChats();
+                loadChat(currentChatId);
+                if(window.innerWidth < 768) toggleSidebar(false);
+            }
+            btnNewChat.addEventListener('click', createNewChat);
+
+            function loadChat(id) {
+                currentChatId = id;
+                saveChats();
+                const chat = chats.find(c => c.id === id);
+                if (!chat) return;
+                
+                currentChatTitle.textContent = chat.title;
+                messagesList.innerHTML = '';
+                
+                if (chat.messages.length === 0) {
+                    messagesList.appendChild(emptyState);
+                } else {
+                    chat.messages.forEach(msg => appendMessageDOM(msg.role, msg.content, false));
+                }
+                scrollToBottom();
+            }
+
+            function deleteChat(id, event) {
+                event.stopPropagation();
+                if(chats.length === 1) return; // Don't delete last chat
+                chats = chats.filter(c => c.id !== id);
+                if(currentChatId === id) currentChatId = chats[0].id;
+                saveChats();
+                loadChat(currentChatId);
+            }
+
+            window.deleteChat = deleteChat;
+
+            function renderSidebar() {
+                chatHistoryContainer.innerHTML = '';
+                chats.forEach(chat => {
+                    const btn = document.createElement('div');
+                    const isActive = chat.id === currentChatId;
+                    
+                    btn.className = `group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${isActive ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 font-medium' : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'}`;
+                    btn.onclick = () => { loadChat(chat.id); if(window.innerWidth < 768) toggleSidebar(false); };
+                    
+                    btn.innerHTML = `
+                        <div class="flex items-center gap-3 overflow-hidden flex-1">
+                            <i class="fas fa-message text-sm ${isActive ? 'text-brand-500' : 'text-slate-400'}"></i>
+                            <span class="truncate text-sm">${chat.title}</span>
+                        </div>
+                        <button onclick="deleteChat('${chat.id}', event)" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 transition-opacity">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
+                    `;
+                    chatHistoryContainer.appendChild(btn);
+                });
+            }
+
+            // --- AUTO RESIZE TEXTAREA ---
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+                if(this.value.trim() === '') this.style.height = 'auto';
+            });
+            chatInput.addEventListener('keydown', function(e) {
+                if(e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            function scrollToBottom() {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            // --- MESSAGE RENDERING ---
+            function appendMessageDOM(role, content, animate = false) {
+                if (messagesList.contains(emptyState)) emptyState.remove();
+
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `flex gap-4 ${role === 'user' ? 'flex-row-reverse' : ''}`;
+                
+                const avatar = document.createElement('div');
+                avatar.className = `w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white ${role === 'user' ? 'bg-slate-800' : 'bg-brand-500'}`;
+                avatar.innerHTML = role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+                
+                const contentContainer = document.createElement('div');
+                contentContainer.className = `flex-1 max-w-[85%] ${role === 'user' ? 'bg-slate-100 dark:bg-slate-800 p-4 rounded-2xl rounded-tr-none' : 'pt-2'}`;
+                
+                const textWrapper = document.createElement('div');
+                textWrapper.className = `markdown-body ${role === 'user' ? '' : 'text-slate-800 dark:text-slate-200'}`;
+                
+                if (animate && role === 'assistant') {
+                    textWrapper.classList.add('cursor-blink');
+                    textWrapper.innerHTML = '';
+                } else {
+                    textWrapper.innerHTML = marked.parse(content);
+                }
+
+                contentContainer.appendChild(textWrapper);
+                msgDiv.appendChild(avatar);
+                msgDiv.appendChild(contentContainer);
+                messagesList.appendChild(msgDiv);
+                
+                scrollToBottom();
+                return textWrapper;
+            }
+
+            // --- OPENROUTER API LOGIC ---
+            async function sendMessage() {
+                let userText = chatInput.value.trim();
+                if ((!userText && pendingFiles.length === 0) || isGenerating) return;
+
+                if (!apiKey) {
+                    alert("Please set your OpenRouter API Key in Settings first.");
+                    openModal(modalSettings);
+                    return;
+                }
+
+                // Compile files context if any
+                let finalContent = userText;
+                if (pendingFiles.length > 0) {
+                    const fileDescriptions = pendingFiles.map(f => f.context).join('\n---\n');
+                    finalContent = `[ATTACHED FILES CONTEXT]\n${fileDescriptions}\n[USER MESSAGE]\n${userText || "Analyze the attached file(s)."}`;
+                }
+
+                chatInput.value = '';
+                chatInput.style.height = 'auto';
+                pendingFiles = [];
+                renderPendingFiles();
+
+                // Get current chat
+                const chat = chats.find(c => c.id === currentChatId);
+                
+                // Set Title if first message
+                if (chat.messages.length === 0) {
+                    chat.title = userText.substring(0, 30) || "File Analysis";
+                    currentChatTitle.textContent = chat.title;
+                    renderSidebar();
+                }
+
+                // Add User Message
+                chat.messages.push({ role: 'user', content: finalContent });
+                appendMessageDOM('user', finalContent);
+                saveChats();
+                
+                isGenerating = true;
+                btnSend.disabled = true;
+                btnSend.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                // Setup API Request
+                const messagesPayload = [
+                    { role: 'system', content: systemPrompt },
+                    ...chat.messages.map(m => ({ role: m.role, content: m.content }))
+                ];
+
+                const textWrapper = appendMessageDOM('assistant', '', true);
+                let aiFullResponse = "";
+
+                try {
+                    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`,
+                            'HTTP-Referer': window.location.href,
+                            'X-Title': 'FAHAD AI X',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model: model,
+                            messages: messagesPayload,
+                            stream: true
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.error?.message || "API Request Failed");
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+                        
+                        for (const line of lines) {
+                            if (line === 'data: [DONE]') break;
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+                                        aiFullResponse += data.choices[0].delta.content;
+                                        textWrapper.innerHTML = marked.parse(aiFullResponse);
+                                        scrollToBottom();
+                                    }
+                                } catch (e) {
+                                    console.warn("Chunk parsing error", e);
+                                }
+                            }
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error(error);
+                    aiFullResponse = `**Error:** ${error.message}`;
+                    textWrapper.innerHTML = marked.parse(aiFullResponse);
+                } finally {
+                    textWrapper.classList.remove('cursor-blink');
+                    isGenerating = false;
+                    btnSend.disabled = false;
+                    btnSend.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                    
+                    if (aiFullResponse) {
+                        chat.messages.push({ role: 'assistant', content: aiFullResponse });
+                        saveChats();
+                    }
+                }
+            }
+            btnSend.addEventListener('click', sendMessage);
+
+            // Execute Initialization
+            init();
+        });
+    </script>
+</body>
+                      </html>
